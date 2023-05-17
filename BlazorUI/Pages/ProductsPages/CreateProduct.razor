@@ -1,0 +1,133 @@
+﻿@page "/create_product"
+@inject HttpClient HttpClient
+@inject NavigationManager NavigationManager
+
+<h1>Create new product</h1>
+
+@if (IsLoading)
+{
+    <div class="spinner-border text-primary" role="status">
+        <span class="sr-only">Create_Product...</span>
+    </div>
+}
+@*else if (categories is null)
+{
+    <h1 style="color: red"><em>Loading...</em></h1>
+}*@
+else
+{
+    <EditForm Model="@_productDto" OnValidSubmit="HandleFormSubmit">
+        <DataAnnotationsValidator/>
+        <ValidationSummary/>
+
+        <div class="form-group">
+            <label for="categoryId">Select a category:</label>
+            <InputSelect placeholder="Select a category" id="categoryId" class="form-control" @bind-Value="@_productDto.CategoryId">
+                <option> Select a category</option>
+
+                @if (categories is not null)
+                {
+                    foreach (var category in categories)
+                    {
+                        var categ = HelperMethods.GetCategoryNameAndId(category);
+
+                        if (categ == null)
+                        {
+                            continue;
+                        }
+                        foreach (var item in categ)
+                        {
+                            if (item == null)
+                            {
+                                continue;
+                            }
+                            <option value="@item.CategoryId"> @item.CategoryName</option>
+                        }
+                    }
+                }
+            </InputSelect>
+        </div>
+
+        <div class="form-group">
+            <label for="Name">Product Name:</label>
+            <InputText placeholder="Name" id="Name" class="form-control" @bind-Value="@_productDto.Name" />
+        </div>
+
+        <div class="form-group">
+            <label for="description">Description:</label>
+            <InputText placeholder="Description" id="description" class="form-control" @bind-Value="@_productDto.Description" />
+        </div>
+
+        <div class="form-group">
+            <label for="price">Price:</label>
+            <InputNumber placeholder="Description" id="price" class="form-control" @bind-Value="@_productDto.Price" />
+        </div>
+
+        <div class="form-group">
+            <label for="photo">Upload photo:</label>
+            <InputFile placeholder="Upload photo" id="photo" class="form-control" OnChange="@HandleFileSelected" />
+        </div>
+
+        <br/>
+        <button type="submit" class="btn btn-primary">Submit</button>
+        <br/>
+        <br/>
+        <a href="get_products" class="btn btn-secondary">Cancel</a>
+
+    </EditForm>
+}
+
+@code {
+    private bool IsLoading { get; set; } = false;
+
+    private ProductDto _productDto = new ();
+
+    private IEnumerable<CategoryWithChildrenDto>? categories;
+
+
+    protected override async Task OnInitializedAsync()
+    {
+        IsLoading = true;
+        categories = await HttpClient.GetFromJsonAsync<IEnumerable<CategoryWithChildrenDto>>("/api/Category");
+        IsLoading = false;
+    }
+  
+
+    private Task HandleFileSelected(InputFileChangeEventArgs e)
+    {
+        _productDto.Photo = e.File;
+
+        return Task.CompletedTask;
+    }
+
+    private async Task HandleFormSubmit()
+    {
+        var content = new MultipartFormDataContent();
+
+        content.Add(new StringContent(_productDto.CategoryId.ToString()), "CategoryId");
+        content.Add(new StringContent(_productDto.Name), "Name");
+        content.Add(new StringContent(_productDto.Description), "Description");
+        content.Add(new StringContent(_productDto.Price.ToString()), "Price");
+
+        if (_productDto.Photo != null)
+        {
+            using var memoryStream = new MemoryStream();
+            await _productDto.Photo.OpenReadStream().CopyToAsync(memoryStream);
+
+            content.Add(new ByteArrayContent(memoryStream.ToArray()), "Photo", _productDto.Photo.Name);
+        }
+
+        var response = await HttpClient.PostAsync("/api/Product", content);
+
+        if (response.IsSuccessStatusCode)
+        {
+            NavigationManager.NavigateTo("/get_products");
+        }
+        else
+        {
+            Console.WriteLine("CUSTOM ERROR :( ");
+        }
+    }
+
+  
+}

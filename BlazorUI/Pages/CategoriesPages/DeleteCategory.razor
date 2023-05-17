@@ -1,0 +1,70 @@
+﻿@page "/delete_category"
+@inject HttpClient Client
+@inject NavigationManager NavigationManager
+
+<h3>DeleteCategory</h3>
+
+@if (IsLoading)
+{
+    <div class="spinner-border text-primary" role="status">
+        <span class="sr-only">Delete_Category...</span>
+    </div>
+}
+else if (categories is null)
+{
+    <h1 style="color: red"><em>No information found yet...</em></h1>
+
+    <a href="/" class="btn btn-secondary">Cancel</a>
+}
+else
+{
+    <EditForm Model="@categoryDeleteDto" OnValidSubmit="DeleteCategoryAsync">
+        <DataAnnotationsValidator/>
+        <ValidationSummary/>
+
+        <div class="form-group">
+            <label for="categoryId">Select a category for delete:</label>
+            <InputSelect placeholder="Select a category for delete" id="categoryId" class="form-control" @bind-Value="@categoryDeleteDto.Id">
+                <option> Select a category</option>
+
+                @foreach (var category in categories)
+                {
+                    var categ = HelperMethods.GetCategoryNameAndId(category);
+
+                    foreach (var item in categ)
+                    {
+                        <option value="@item.CategoryId"> @item.CategoryName</option>
+                    }
+                }
+            </InputSelect>
+        </div>
+        
+        <br/>
+        <button type="submit" class="btn btn-danger">Delete</button>
+    </EditForm>
+}
+
+@code {
+    private IEnumerable<CategoryWithChildrenDto>? categories;
+    private bool IsLoading { get; set; } = false;
+    private CategoryDeleteDto categoryDeleteDto = new();
+
+    protected override async Task OnInitializedAsync()
+    {
+        IsLoading = true;
+        categories = await Client.GetFromJsonAsync<List<CategoryWithChildrenDto>>("/api/Category");
+        IsLoading = false;
+    }
+
+    public async Task DeleteCategoryAsync()
+    {
+        if (!string.IsNullOrEmpty(categoryDeleteDto.Id.ToString()))
+        {
+            IsLoading = true;
+            await Client.DeleteAsync($"/api/Category/{categoryDeleteDto.Id}");
+            IsLoading = false;
+
+            NavigationManager.NavigateTo("/get_categories");
+        }
+    }
+}

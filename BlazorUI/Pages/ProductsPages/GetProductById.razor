@@ -1,0 +1,64 @@
+﻿@page "/get_product_by_id"
+@inject HttpClient HttpClient
+
+<h3>Get product by Id</h3>
+
+@if (IsLoading)
+{
+    <div class="spinner-border text-primary" role="status">
+        <span class="sr-only">Get_Product_By_ID...</span>
+    </div>
+}
+@*else if (products is null)
+{
+    <h1 style="color: red"><em>Loading...</em></h1>
+}*@
+else
+{
+    <EditForm Model="getProductById">
+        <div class="form-group">
+            <label for="Id"> Select a product:</label>
+            <InputSelect placeholder="Select a product" id="Id" class="form-control" @bind-Value="getProductById">
+                <option> Select a product</option>
+
+                @if (products is not null)
+                {
+                    foreach (var product in products)
+                    {
+                        <option value="@product.Id"> @product.Name</option>
+                    }
+                }
+
+            </InputSelect>
+        </div>
+    </EditForm>
+
+    <br /><br />
+    <h1 style="color: crimson">Product data</h1>
+    <br /><br />
+    <p>============================================================</p>
+    <br />
+
+    @if (products.FirstOrDefault(p => p.Id == getProductById) != null)
+    {
+        var selectedItem = products.FirstOrDefault(p => p.Id == getProductById);
+        <h3 style="color: gold">Product name: <span style="color: hotpink">@selectedItem?.Name</span> </h3>
+        <p>Price:  @selectedItem?.Price</p>
+        <p>Id: @selectedItem?.Id</p>
+        <p>Category ID:  @selectedItem?.CategoryId</p>
+    }
+}
+
+
+@code {
+    private Guid getProductById;
+    private List<ProductDto>? products;
+    private bool IsLoading { get; set; } = false;
+
+    protected  override async Task OnInitializedAsync()
+    {
+        IsLoading = true;
+        products = await HttpClient.GetFromJsonAsync<List<ProductDto>>($"api/Product");
+        IsLoading = false;
+    }
+}

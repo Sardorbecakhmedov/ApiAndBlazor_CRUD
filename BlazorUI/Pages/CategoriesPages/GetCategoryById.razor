@@ -1,0 +1,70 @@
+﻿@page "/get_category_by_id"
+@inject HttpClient HttpClient
+
+<h3>Get product by Id</h3>
+
+@if (IsLoading)
+{
+    <div class="spinner-border text-primary" role="status">
+        <span class="sr-only">Get_Product_By_ID...</span>
+    </div>
+}
+else if (categories is null)
+{
+    <h1 style="color: red"><em>No information found yet...</em></h1>
+
+    <a href="/" class="btn btn-secondary">Cancel</a>
+}
+else
+{
+    <EditForm Model="getCategoryById">
+        <div class="form-group">
+            <label for="Id"> Select a category:</label>
+            <InputSelect placeholder="Select a category" id="Id" class="form-control" @bind-Value="getCategoryById">
+                <option> Select a category</option>
+
+                @if (categories is not null)
+                {
+                    foreach (var category in categories)
+                    {
+                        <option value="@category.Id"> @category.CategoryName</option>
+                    }
+                }
+
+            </InputSelect>
+        </div>
+    </EditForm>
+
+    <br />
+    <p>============================================================</p>
+    <br /><br />
+    <h1 style="color: crimson">Category data</h1>
+    <br /><br />
+
+    @if (categories.FirstOrDefault(p => p.Id == getCategoryById) != null)
+    {
+        var selectedItem = categories.FirstOrDefault(p => p.Id == getCategoryById);
+
+        <h3 style="color: gold">Product name: <span style="color: hotpink">@selectedItem?.CategoryName</span> </h3>
+        <p>Description:  @selectedItem?.Description</p>
+        <p>Category ID: @selectedItem?.Id</p>
+        <p>Children count:  @selectedItem?.Children.Count()</p>
+    }
+}
+
+
+@code {
+    private Guid getCategoryById;
+
+    private List<CategoryWithChildrenDto>? categories;
+    private bool IsLoading = false;
+
+
+    protected override async Task OnInitializedAsync()
+    {
+        IsLoading = true;
+        categories = await HttpClient.GetFromJsonAsync<List<CategoryWithChildrenDto>>("/api/Category");
+        IsLoading = false;
+    }
+
+}

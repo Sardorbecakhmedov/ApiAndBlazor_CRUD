@@ -1,0 +1,180 @@
+﻿@page "/update_product"
+@inject HttpClient HttpClient
+@inject NavigationManager NavigationManager
+
+
+<h1>Edit product by id</h1>
+
+@if (IsLoading)
+{
+    <div class="spinner-border text-primary" role="status">
+        <span class="sr-only">Update_Product...</span>
+    </div>
+}
+else if (_products is null && categories is null)
+{
+    <h1 style="color: red"><em>Loading...</em></h1>
+}
+else
+{
+    <EditForm Model="@_product" OnValidSubmit="@UpdateProductAsync">
+        <DataAnnotationsValidator />
+        <ValidationSummary />
+
+        <div class="form-btn-group">
+            <lebel for="productId"> Select a product</lebel>
+            <InputSelect placeholder="Select a product" id="categoryId" class="form-control" @bind-Value="@_product.Id">
+                <option> Select a product</option>
+
+                @if (_products is not null)
+                {
+                    @foreach (var product in _products)
+                    {
+                        <option value="@product.Id"> @product.Name</option>
+                    }
+                }
+
+            </InputSelect>
+        </div>
+
+        <div class="form-group">
+            <label for="categoryId">Select a category:</label>
+            <InputSelect placeholder="Select a category" id="categoryId" class="form-control" @bind-Value="@_product.CategoryId">
+                <option> Select a category</option>
+
+                @if (categories is not null)
+                {
+                    foreach (var category in categories)
+                    {
+                        var categ = HelperMethods.GetCategoryNameAndId(category);
+
+                        if (categ == null)
+                        {
+                            continue;
+                        }
+                        foreach (var item in categ)
+                        {
+                            if (item == null)
+                            {
+                                continue;
+                            }
+                            <option value="@item.CategoryId"> @item.CategoryName</option>
+                        }
+                    }
+                }
+            </InputSelect>
+        </div>
+
+
+        <div class="form-group">
+            <label for="name">Name:</label>
+            <InputText placeholder="Name" id="name" class="form-control" @bind-Value="@_product.Name" />
+        </div>
+
+        <div class="form-group">
+            <label for="description">Description:</label>
+            <InputTextArea placeholder="Description" id="description" class="form-control" @bind-Value="@_product.Description" />
+        </div>
+
+        <div class="form-group">
+            <label for="price">Price:</label>
+            <InputNumber placeholder="Price" id="price" class="form-control" @bind-Value="@_product.Price" />
+        </div>
+        
+        <br/>
+        <div class="form-group">
+            <label for="photo">Photo:</label>
+            <InputFile placeholder="Photo" id="photo" class="form-control-file" OnChange="@SelectedFileHandler" />
+        </div>
+
+        <br/>
+        <button type="submit" class="btn btn-primary">Update product</button>
+        <br/><br/>
+        <a href="/get_products" class="btn btn-secondary">Cancel</a>
+    </EditForm>
+}
+
+@code {
+
+    private bool IsLoading { get; set; }
+
+    private ProductUpdateDto _product = new();
+    private List<ProductDto>? _products;
+    private List<CategoryWithChildrenDto>? categories;
+
+    protected override async Task OnInitializedAsync()
+    {
+        IsLoading = true;
+        _products = await HttpClient.GetFromJsonAsync<List<ProductDto>>($"/api/Product");
+
+        categories = await HttpClient.GetFromJsonAsync<List<CategoryWithChildrenDto>>("/api/Category");
+        IsLoading = false;
+    }
+
+    private Task SelectedFileHandler(InputFileChangeEventArgs inputFile)
+    {
+        IBrowserFile? file = inputFile.File;
+
+        if (file is not null)
+        {
+            _product.Photo = file;
+        }
+        return Task.CompletedTask;
+    }
+
+
+    private async Task UpdateProductAsync()
+    {
+        ProductDto? product = null ;
+
+        if (_products is not null)
+        {
+            product =  _products.FirstOrDefault(id => id.Id == _product.Id);
+        }
+        else
+        {
+            Console.WriteLine("Products null !");
+        }
+
+        var content = new MultipartFormDataContent();
+
+        if (product is not null)
+        {
+            content.Add(new StringContent(_product.Id.ToString()), "Id");
+            content.Add(new StringContent(_product.CategoryId.ToString() ?? product.CategoryId.ToString()), "CategoryId");
+            content.Add(new StringContent(_product.Name ?? product.Name), "Name");
+            content.Add(new StringContent(_product.Description ?? product.Description), "Description");
+            content.Add(new StringContent(_product.Price.ToString() ?? product.Price.ToString()), "Price");
+        }
+        else
+        {
+            Console.WriteLine("Product null :( ");
+        }
+
+        if (_product.Photo is not null)
+        {
+            await using var stream = new MemoryStream();
+            await _product.Photo.OpenReadStream().CopyToAsync(stream);
+
+            content.Add(new ByteArrayContent(stream.ToArray()), "Photo", _product.Photo.Name);
+        }
+        else if(product?.Photo != null)
+        {
+            await using var stream = new MemoryStream();
+            await product.Photo.OpenReadStream().CopyToAsync(stream);
+            content.Add(new ByteArrayContent(stream.ToArray()), "Photo", _product.Photo.Name);
+        }
+
+        var response = await HttpClient.PutAsync($"/api/Product/{_product.Id}", content);
+
+        if (response.IsSuccessStatusCode)
+        {
+            NavigationManager.NavigateTo("/get_products");
+        }
+        else
+        {
+            Console.WriteLine("Update Error :(");
+        }
+    }
+
+}

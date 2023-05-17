@@ -1,0 +1,95 @@
+﻿<div class="top-row ps-3 navbar navbar-dark">
+    <div class="container-fluid">
+        <a class="navbar-brand" href="">BlazorUI</a>
+        <button title="Navigation menu" class="navbar-toggler" @onclick="ToggleNavMenu">
+            <span class="navbar-toggler-icon"></span>
+        </button>
+    </div>
+</div>
+
+<div class="@NavMenuCssClass" @onclick="ToggleNavMenu">
+    <nav class="flex-column">
+
+        <div class="nav-item px-3">
+            <NavLink class="nav-link" href="">
+                <span class="oi oi-home" aria-hidden="true"></span> Home
+            </NavLink>
+        </div>
+        
+        <h4 style="color:crimson">Category <span style="color: gold">section</span></h4>
+
+        <div class="nav-item px-3">
+            <NavLink class="nav-link" href="create_category">
+                <span class="oi oi-plus" aria-hidden="true"></span> Create category
+            </NavLink>
+        </div>
+
+        <div class="nav-item px-3">
+            <NavLink class="nav-link" href="get_categories">
+                <span class="oi oi-list-rich" aria-hidden="true"></span> Get all categories
+            </NavLink>
+        </div>
+
+        <div class="nav-item px-3">
+            <NavLink class="nav-link" href="update_category">
+                <span class="oi oi-check"></span> Update category
+            </NavLink>
+        </div>
+
+        <div class="nav-item px-3">
+            <NavLink class="nav-link" href="get_category_by_id">
+                <span class="oi oi-collapse-up"></span> Get category byID
+            </NavLink>
+        </div>
+
+        <div class="nav-item px-3">
+            <NavLink class="nav-link" href="delete_category">
+                <span class="oi oi-delete"></span> Delete category byID
+            </NavLink>
+        </div>
+
+        <h4 style="color: gold">Product <span style="color: chartreuse">section</span></h4>
+
+        <div class="nav-item px-3">
+            <NavLink class="nav-link" href="create_product">
+                <span class="oi oi-plus" aria-hidden="true"></span> Create product
+            </NavLink>
+        </div>
+
+        <div class="nav-item px-3">
+            <NavLink class="nav-link" href="get_products">
+                <span class="oi oi-list-rich" aria-hidden="true"></span> Get all products
+            </NavLink>
+        </div>
+
+        <div class="nav-item px-3">
+            <NavLink class="nav-link" href="update_product">
+                <span class="oi oi-check"></span> Update product
+            </NavLink>
+        </div>
+        
+        <div class="nav-item px-3">
+            <NavLink class="nav-link" href="get_product_by_id">
+                <span class="oi oi-collapse-up"></span> Get product byID
+            </NavLink>
+        </div>
+
+        <div class="nav-item px-3">
+            <NavLink class="nav-link" href="delete_product_by_id">
+                <span class="oi oi-delete"></span> Delete product byID
+            </NavLink>
+        </div>
+
+    </nav>
+</div>
+
+@code {
+    private bool collapseNavMenu = true;
+
+    private string? NavMenuCssClass => collapseNavMenu ? "collapse" : null;
+
+    private void ToggleNavMenu()
+    {
+        collapseNavMenu = !collapseNavMenu;
+    }
+}

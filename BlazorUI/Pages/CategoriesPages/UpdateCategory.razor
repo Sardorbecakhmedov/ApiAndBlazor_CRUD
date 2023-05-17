@@ -1,0 +1,115 @@
+﻿@page "/update_category"
+@inject HttpClient HttpClient
+@inject NavigationManager NavigationManager
+
+
+<h1>Update product by id</h1>
+
+@if (IsLoading)
+{
+    <div class="spinner-border text-primary" role="status">
+        <span class="sr-only">Update_Product...</span>
+    </div>
+}
+else if (_category is null && categories is null)
+{
+    <h1 style="color: red"><em>No information found yet...</em></h1>
+
+    <a href="/" class="btn btn-secondary">Cancel</a>
+}
+else
+{
+    <EditForm Model="@_category" OnValidSubmit="@UpdateCategoryAsync">
+        <DataAnnotationsValidator />
+        <ValidationSummary />
+
+        <div class="form-group">
+            <label for="categoryId">Select a category:</label>
+            <InputSelect placeholder="Select a category" id="categoryId" class="form-control" @bind-Value="@_category.Id">
+                <option> Select a category</option>
+
+                @if (categories is not null)
+                {
+                    foreach (var category in categories)
+                    {
+                        var categ = HelperMethods.GetCategoryNameAndId(category);
+
+                        if (categ == null)
+                        {
+                            continue;
+                        }
+                        foreach (var item in categ)
+                        {
+                            if (item == null)
+                            {
+                                continue;
+                            }
+                            <option value="@item.CategoryId"> @item.CategoryName</option>
+                        }
+                    }
+                }
+            </InputSelect>
+        </div>
+
+        <div class="form-group">
+            <label for="categoryId">Select a parent ID:</label>
+            <InputSelect placeholder="Select a category" id="categoryId" class="form-control" @bind-Value="@_category.ParentId">
+
+                <option> Select a parent ID</option>
+
+                @if (categories is not null)
+                {
+                    foreach (var category in categories)
+                    {
+                        <option value="@category.Id"> @category.CategoryName</option>
+                    }
+                }
+            </InputSelect>
+        </div>
+
+        <div class="form-group">
+            <label for="name">Name:</label>
+            <InputText placeholder="Name" id="name" class="form-control" @bind-Value="@_category.Name" />
+        </div>
+
+        <div class="form-group">
+            <label for="description">Description:</label>
+            <InputTextArea placeholder="Description" id="description" class="form-control" @bind-Value="@_category.Description" />
+        </div>
+
+        <br/>
+        <button type="submit" class="btn btn-primary">Update product</button>
+        <br/><br/>
+        <a href="/get_category" class="btn btn-secondary">Cancel</a>
+    </EditForm>
+}
+
+@code {
+
+    private bool IsLoading { get; set; }
+
+    private CategoryUpdateDto? _category = new();
+    private List<CategoryWithChildrenDto>? categories;
+
+    protected override async Task OnInitializedAsync()
+    {
+        categories = await HttpClient.GetFromJsonAsync<List<CategoryWithChildrenDto>>("/api/Category");
+        IsLoading = false;
+    }
+
+    private async Task UpdateCategoryAsync()
+    {
+        var response = await HttpClient.PutAsJsonAsync($"/api/Category/{_category.Id}", _category);
+
+
+        if (response.IsSuccessStatusCode)
+        {
+            NavigationManager.NavigateTo("/get_categories");
+        }
+        else
+        {
+            Console.WriteLine("Update Error :(");
+        }
+    }
+
+}

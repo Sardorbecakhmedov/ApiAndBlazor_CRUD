@@ -1,0 +1,51 @@
+﻿@page "/get_categories"
+@inject HttpClient Client
+
+<PageTitle>GetCategories</PageTitle>
+
+<h2>Get categories page</h2>
+<br/>
+
+@if (IsLoading)
+{
+    <div class="spinner-border text-primary" role="status">
+        <span class="sr-only">Get_Categories...</span>
+    </div>
+}
+else if (categories is null)
+{
+    <h1 style="color: red"><em>No information found yet...</em></h1>
+
+    <a href="/" class="btn btn-secondary">Cancel</a>
+}
+else
+{
+    @if (categories is not null)
+    {
+        foreach (var category in categories)
+        {
+            var categ = HelperMethods.GetCategoryNameAndId(category);
+
+            foreach (var item in categ)
+            {
+                <option value="@item.CategoryId"> @item.CategoryName</option>
+            }
+        }
+    }
+}
+
+
+@code {
+
+    private List<CategoryWithChildrenDto>? categories;
+    private bool IsLoading = false;
+
+
+    protected override async Task OnInitializedAsync()
+    {
+        IsLoading = true;
+        categories = await Client.GetFromJsonAsync<List<CategoryWithChildrenDto>>("/api/Category");
+        IsLoading = false;
+    }
+
+}

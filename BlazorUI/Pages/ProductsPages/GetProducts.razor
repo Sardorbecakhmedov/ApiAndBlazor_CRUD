@@ -1,0 +1,41 @@
+﻿@page "/get_products"
+@inject HttpClient Client
+
+<h3>Get products</h3>
+<br/>
+
+@if (IsLoading)
+{
+    <div class="spinner-border text-primary" role="status">
+        <span class="sr-only">Get_Products...</span>
+    </div>
+}
+else if (_products is null)
+{
+    <h1 style="color: red"><em>Loading...</em></h1>
+}
+else
+{
+    foreach (var product in _products)
+    {
+        <h4 style="color: red"> ProductName: <span style="color: gold"> @product.Name</span></h4>
+        <h5> Description:  @product.Description</h5>
+        <h5> Price:  @product.Price</h5>
+        <p> CategoryID:  @product.CategoryId</p>
+        <br/>   
+    }
+}
+
+
+
+@code {
+    private bool IsLoading = false;
+    private List<ProductDto>? _products;
+
+    protected override async Task OnInitializedAsync()
+    {
+        IsLoading = true;
+        _products = await Client.GetFromJsonAsync<List<ProductDto>>("api/Product");
+        IsLoading = false;
+    }
+}
